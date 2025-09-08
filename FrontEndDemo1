@@ -1,0 +1,323 @@
+import React, { useState } from 'react';
+import { Plus, Trash2, ShoppingCart, Sparkles, Zap, Coffee } from 'lucide-react';
+
+const GroceryApp = () => {
+  const [events, setEvents] = useState([]);
+  const [currentEvent, setCurrentEvent] = useState('');
+  const [groceryList, setGroceryList] = useState([]);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  // Simulated LLM processing function
+  const processEventForGroceries = (eventText) => {
+    // Simple keyword-based extraction that simulates LLM processing
+    const foodKeywords = {
+      // Meals and occasions
+      'dinner party': ['wine', 'cheese', 'crackers', 'olives', 'bread'],
+      'birthday party': ['cake mix', 'frosting', 'candles', 'ice cream', 'party favors'],
+      'breakfast': ['eggs', 'bread', 'milk', 'butter', 'coffee'],
+      'lunch': ['sandwich bread', 'deli meat', 'lettuce', 'tomatoes', 'mayo'],
+      'bbq': ['hamburger buns', 'ground beef', 'charcoal', 'ketchup', 'mustard'],
+      'pizza night': ['pizza dough', 'tomato sauce', 'mozzarella cheese', 'pepperoni'],
+      'taco tuesday': ['ground beef', 'taco shells', 'lettuce', 'tomatoes', 'cheese', 'sour cream'],
+      'movie night': ['popcorn', 'soda', 'candy', 'chips'],
+      
+      // Specific foods mentioned
+      'pasta': ['pasta', 'tomato sauce', 'parmesan cheese', 'garlic', 'onions'],
+      'salad': ['lettuce', 'tomatoes', 'cucumbers', 'salad dressing', 'croutons'],
+      'soup': ['broth', 'vegetables', 'noodles', 'herbs'],
+      'sandwich': ['bread', 'deli meat', 'cheese', 'lettuce', 'mayo'],
+      'smoothie': ['bananas', 'berries', 'yogurt', 'honey', 'protein powder'],
+      'cookies': ['flour', 'sugar', 'butter', 'eggs', 'chocolate chips'],
+      'cake': ['cake mix', 'eggs', 'oil', 'frosting'],
+      'coffee': ['coffee beans', 'milk', 'sugar', 'creamer'],
+      
+      // Dietary needs
+      'vegetarian': ['tofu', 'vegetables', 'quinoa', 'beans', 'nuts'],
+      'vegan': ['plant milk', 'nutritional yeast', 'vegetables', 'fruits', 'grains'],
+      'keto': ['avocados', 'eggs', 'cheese', 'meat', 'leafy greens'],
+      'healthy': ['fruits', 'vegetables', 'whole grains', 'lean protein', 'yogurt'],
+      
+      // Occasions
+      'guests': ['snacks', 'drinks', 'appetizers', 'dessert'],
+      'kids': ['juice boxes', 'crackers', 'fruit snacks', 'peanut butter', 'jelly'],
+      'office': ['coffee', 'snacks', 'lunch items'],
+      
+      // Cooking methods
+      'grilling': ['meat', 'vegetables', 'marinades', 'charcoal'],
+      'baking': ['flour', 'sugar', 'eggs', 'butter', 'baking powder'],
+      'stir fry': ['vegetables', 'soy sauce', 'rice', 'oil', 'garlic']
+    };
+
+    const text = eventText.toLowerCase();
+    let suggestedItems = [];
+
+    // Check for keyword matches
+    Object.entries(foodKeywords).forEach(([keyword, items]) => {
+      if (text.includes(keyword)) {
+        suggestedItems = [...suggestedItems, ...items];
+      }
+    });
+
+    // Extract explicit food mentions with simple patterns
+    const explicitFoods = [
+      'apples', 'bananas', 'oranges', 'grapes', 'strawberries', 'blueberries',
+      'carrots', 'broccoli', 'spinach', 'potatoes', 'onions', 'garlic',
+      'chicken', 'beef', 'pork', 'fish', 'salmon', 'shrimp',
+      'milk', 'cheese', 'yogurt', 'butter', 'eggs',
+      'bread', 'rice', 'pasta', 'cereal', 'oats',
+      'olive oil', 'salt', 'pepper', 'sugar', 'flour'
+    ];
+
+    explicitFoods.forEach(food => {
+      if (text.includes(food)) {
+        suggestedItems.push(food);
+      }
+    });
+
+    // Remove duplicates and return
+    return [...new Set(suggestedItems)];
+  };
+
+  const addEvent = () => {
+    if (!currentEvent.trim()) return;
+
+    setIsProcessing(true);
+    
+    // Simulate processing delay
+    setTimeout(() => {
+      const newEvent = {
+        id: Date.now(),
+        text: currentEvent,
+        timestamp: new Date().toLocaleString()
+      };
+      
+      setEvents(prev => [...prev, newEvent]);
+      
+      // Process event for groceries
+      const suggestedItems = processEventForGroceries(currentEvent);
+      
+      // Add new items to grocery list (avoid duplicates)
+      const currentItems = groceryList.map(item => item.name.toLowerCase());
+      const newItems = suggestedItems
+        .filter(item => !currentItems.includes(item.toLowerCase()))
+        .map(item => ({
+          id: Date.now() + Math.random(),
+          name: item,
+          checked: false,
+          fromEvent: newEvent.id
+        }));
+      
+      setGroceryList(prev => [...prev, ...newItems]);
+      setCurrentEvent('');
+      setIsProcessing(false);
+    }, 1200);
+  };
+
+  const removeEvent = (eventId) => {
+    setEvents(prev => prev.filter(e => e.id !== eventId));
+    setGroceryList(prev => prev.filter(item => item.fromEvent !== eventId));
+  };
+
+  const toggleGroceryItem = (itemId) => {
+    setGroceryList(prev =>
+      prev.map(item =>
+        item.id === itemId ? { ...item, checked: !item.checked } : item
+      )
+    );
+  };
+
+  const removeGroceryItem = (itemId) => {
+    setGroceryList(prev => prev.filter(item => item.id !== itemId));
+  };
+
+  const exampleEvents = [
+    "hosting a cozy dinner party this weekend",
+    "baking cookies with my roommates",
+    "meal prep sunday - going healthy this week",
+    "netflix & chill night tomorrow",
+    "making homemade pasta for date night"
+  ];
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-zinc-100">
+      {/* Header */}
+      <div className="relative overflow-hidden bg-white border-b border-gray-100">
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 via-indigo-500/5 to-cyan-500/5"></div>
+        <div className="relative max-w-7xl mx-auto px-6 py-12">
+          <div className="text-center">
+            <div className="inline-flex items-center gap-3 mb-6 px-4 py-2 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-full border border-purple-100">
+              <Zap className="w-5 h-5 text-purple-600" />
+              <span className="text-purple-700 font-medium text-sm">AI-Powered</span>
+            </div>
+            <h1 className="text-5xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent mb-4">
+              Smart Grocery
+            </h1>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
+              Tell me what you're planning, and I'll curate the perfect grocery list for you
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 py-12">
+        <div className="grid lg:grid-cols-5 gap-8">
+          {/* Events Section */}
+          <div className="lg:col-span-3">
+            <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-100 p-8">
+              <div className="flex items-center gap-3 mb-8">
+                <div className="p-2 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl">
+                  <Coffee className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">What's happening?</h2>
+                  <p className="text-gray-500 text-sm">Drop your plans, events, or food cravings</p>
+                </div>
+              </div>
+              
+              <div className="space-y-6">
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={currentEvent}
+                    onChange={(e) => setCurrentEvent(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && addEvent()}
+                    placeholder="e.g., hosting friends for brunch this sunday..."
+                    className="w-full px-6 py-4 bg-gray-50/50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 transition-all placeholder-gray-400 text-lg"
+                    disabled={isProcessing}
+                  />
+                  <button
+                    onClick={addEvent}
+                    disabled={isProcessing || !currentEvent.trim()}
+                    className="absolute right-2 top-2 bottom-2 px-6 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl hover:from-purple-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-all shadow-sm"
+                  >
+                    {isProcessing ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        <span className="hidden sm:inline">Thinking...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4" />
+                        <span className="hidden sm:inline">Generate</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  <p className="text-sm font-medium text-gray-700">Quick starts:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {exampleEvents.map((example, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setCurrentEvent(example)}
+                        className="px-4 py-2 bg-gray-100/80 text-gray-600 rounded-full text-sm hover:bg-gray-200/80 transition-all border border-gray-200 hover:border-gray-300"
+                      >
+                        {example}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-4 max-h-96 overflow-y-auto">
+                  {events.map((event, idx) => (
+                    <div 
+                      key={event.id} 
+                      className="group relative bg-gradient-to-r from-gray-50/50 to-gray-100/30 p-6 rounded-2xl border border-gray-100 hover:shadow-sm transition-all"
+                      style={{
+                        animationDelay: `${idx * 100}ms`
+                      }}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <p className="text-gray-900 font-medium text-lg leading-relaxed">{event.text}</p>
+                          <p className="text-gray-400 text-sm mt-2">{event.timestamp}</p>
+                        </div>
+                        <button
+                          onClick={() => removeEvent(event.id)}
+                          className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-all p-2 hover:bg-red-50 rounded-lg"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Grocery List Section */}
+          <div className="lg:col-span-2">
+            <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-100 p-8 sticky top-6">
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl">
+                    <ShoppingCart className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">Your List</h2>
+                    <p className="text-gray-500 text-sm">AI-curated just for you</p>
+                  </div>
+                </div>
+                {groceryList.length > 0 && (
+                  <div className="bg-gradient-to-r from-emerald-100 to-teal-100 text-emerald-700 text-sm font-semibold px-4 py-2 rounded-full border border-emerald-200">
+                    {groceryList.filter(item => !item.checked).length} left
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-3 max-h-[500px] overflow-y-auto">
+                {groceryList.length === 0 ? (
+                  <div className="text-center py-16 text-gray-400">
+                    <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center">
+                      <ShoppingCart className="w-10 h-10" />
+                    </div>
+                    <p className="text-lg font-medium mb-2">Your list awaits</p>
+                    <p className="text-sm">Add some events to get started</p>
+                  </div>
+                ) : (
+                  groceryList.map((item, idx) => (
+                    <div
+                      key={item.id}
+                      className={`group flex items-center gap-4 p-4 rounded-xl border transition-all hover:shadow-sm ${
+                        item.checked
+                          ? 'bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200 text-emerald-700'
+                          : 'bg-gray-50/50 border-gray-200 hover:bg-gray-100/50'
+                      }`}
+                      style={{
+                        animationDelay: `${idx * 50}ms`
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={item.checked}
+                        onChange={() => toggleGroceryItem(item.id)}
+                        className="w-5 h-5 text-emerald-600 rounded-md focus:ring-emerald-500/20 border-gray-300"
+                      />
+                      <span
+                        className={`flex-1 capitalize font-medium ${
+                          item.checked ? 'line-through opacity-60' : ''
+                        }`}
+                      >
+                        {item.name}
+                      </span>
+                      <button
+                        onClick={() => removeGroceryItem(item.id)}
+                        className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-all p-1 hover:bg-red-50 rounded-md"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default GroceryApp;
