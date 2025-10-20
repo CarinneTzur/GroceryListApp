@@ -258,14 +258,6 @@ The app currently uses mock authentication for testing:
 - ✅ **macOS**: macOS 10.14+
 - ✅ **Linux**: Ubuntu 18.04+
 
-## 🤝 Contributing
-
-This is a class project demonstrating Flutter development with clean architecture, state management, and modern UI design patterns.
-
-## 📄 License
-
-This project is for educational purposes as part of a class assignment.
-
 ---
 
 **Built with ❤️ using Flutter**
