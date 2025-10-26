@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/theme/app_theme.dart';
 import 'core/router/app_router.dart';
-import 'core/providers/auth_provider.dart';
+import 'core/providers/shared_preferences_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

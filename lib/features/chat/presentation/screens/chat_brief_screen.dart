@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../data/providers/gemini_provider.dart';
 
 class ChatBriefScreen extends ConsumerStatefulWidget {
   const ChatBriefScreen({super.key});
@@ -13,13 +14,6 @@ class ChatBriefScreen extends ConsumerStatefulWidget {
 class _ChatBriefScreenState extends ConsumerState<ChatBriefScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  final List<ChatMessage> _messages = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _addWelcomeMessage();
-  }
 
   @override
   void dispose() {
@@ -28,65 +22,14 @@ class _ChatBriefScreenState extends ConsumerState<ChatBriefScreen> {
     super.dispose();
   }
 
-  void _addWelcomeMessage() {
-    _messages.add(ChatMessage(
-      text: "Hi! I'm here to help you plan your meals. Tell me about your preferences, dietary restrictions, or any specific foods you'd like to include or avoid in your meal plan.",
-      isUser: false,
-      timestamp: DateTime.now(),
-    ));
-  }
-
   void _sendMessage() {
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
 
-    setState(() {
-      _messages.add(ChatMessage(
-        text: text,
-        isUser: true,
-        timestamp: DateTime.now(),
-      ));
-    });
-
+    final chatNotifier = ref.read(chatProvider.notifier);
+    chatNotifier.sendMessage(text);
     _messageController.clear();
     _scrollToBottom();
-
-    // Simulate AI response
-    Future.delayed(const Duration(seconds: 1), () {
-      _addAIResponse(text);
-    });
-  }
-
-  void _addAIResponse(String userMessage) {
-    setState(() {
-      _messages.add(ChatMessage(
-        text: _generateAIResponse(userMessage),
-        isUser: false,
-        timestamp: DateTime.now(),
-      ));
-    });
-    _scrollToBottom();
-  }
-
-  String _generateAIResponse(String userMessage) {
-    // Simple mock responses based on keywords
-    final message = userMessage.toLowerCase();
-    
-    if (message.contains('vegetarian') || message.contains('vegan')) {
-      return "Great! I'll make sure to include plenty of plant-based options in your meal plan. I can suggest delicious vegetarian recipes with good protein sources like beans, lentils, and quinoa.";
-    } else if (message.contains('allergy') || message.contains('allergic')) {
-      return "I understand you have allergies. Please let me know specifically what you're allergic to so I can ensure those ingredients are completely avoided in your meal recommendations.";
-    } else if (message.contains('budget') || message.contains('cheap') || message.contains('affordable')) {
-      return "I'll focus on budget-friendly recipes and suggest cost-effective alternatives. I can also help you plan meals that use similar ingredients to reduce waste and save money.";
-    } else if (message.contains('time') || message.contains('quick') || message.contains('fast')) {
-      return "I'll prioritize quick and easy recipes for you. I can suggest 15-30 minute meals and meal prep options to save time during the week.";
-    } else if (message.contains('protein') || message.contains('muscle') || message.contains('gym')) {
-      return "I'll make sure to include high-protein recipes in your meal plan. I can suggest lean meats, fish, eggs, and plant-based protein sources to help you meet your fitness goals.";
-    } else if (message.contains('lose weight') || message.contains('weight loss')) {
-      return "I'll create a meal plan focused on nutrient-dense, lower-calorie options that will help you achieve your weight loss goals while keeping you satisfied.";
-    } else {
-      return "Thanks for sharing that! I'm taking note of your preferences. Is there anything else you'd like me to know about your dietary needs, cooking skills, or meal planning goals?";
-    }
   }
 
   void _scrollToBottom() {
@@ -103,6 +46,8 @@ class _ChatBriefScreenState extends ConsumerState<ChatBriefScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final chatState = ref.watch(chatProvider);
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text('Chat Brief'),
@@ -110,24 +55,41 @@ class _ChatBriefScreenState extends ConsumerState<ChatBriefScreen> {
           IconButton(
             icon: const Icon(Icons.clear_all),
             onPressed: () {
-              setState(() {
-                _messages.clear();
-                _addWelcomeMessage();
-              });
+              final chatNotifier = ref.read(chatProvider.notifier);
+              chatNotifier.clearChat();
             },
           ),
         ],
       ),
       body: Column(
         children: [
+          // Show error if any
+          if (chatState.error != null)
+            Container(
+              padding: const EdgeInsets.all(12),
+              color: AppTheme.errorColor.withOpacity(0.1),
+              child: Row(
+                children: [
+                  Icon(Icons.error_outline, color: AppTheme.errorColor),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Error: ${chatState.error}',
+                      style: TextStyle(color: AppTheme.errorColor),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          
           // Chat Messages
           Expanded(
             child: ListView.builder(
               controller: _scrollController,
               padding: const EdgeInsets.all(16),
-              itemCount: _messages.length,
+              itemCount: chatState.messages.length,
               itemBuilder: (context, index) {
-                final message = _messages[index];
+                final message = chatState.messages[index];
                 return _buildMessageBubble(message);
               },
             ),
@@ -166,17 +128,29 @@ class _ChatBriefScreenState extends ConsumerState<ChatBriefScreen> {
                     maxLines: null,
                     textInputAction: TextInputAction.send,
                     onSubmitted: (_) => _sendMessage(),
+                    enabled: !chatState.isLoading,
                   ),
                 ),
                 const SizedBox(width: 8),
                 Container(
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryColor,
+                    color: chatState.isLoading
+                        ? Colors.grey
+                        : AppTheme.primaryColor,
                     borderRadius: BorderRadius.circular(24),
                   ),
                   child: IconButton(
-                    icon: const Icon(Icons.send, color: Colors.white),
-                    onPressed: _sendMessage,
+                    icon: chatState.isLoading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : const Icon(Icons.send, color: Colors.white),
+                    onPressed: chatState.isLoading ? null : _sendMessage,
                   ),
                 ),
               ],
@@ -281,16 +255,4 @@ class _ChatBriefScreenState extends ConsumerState<ChatBriefScreen> {
       return '${difference.inDays}d ago';
     }
   }
-}
-
-class ChatMessage {
-  final String text;
-  final bool isUser;
-  final DateTime timestamp;
-
-  ChatMessage({
-    required this.text,
-    required this.isUser,
-    required this.timestamp,
-  });
 }

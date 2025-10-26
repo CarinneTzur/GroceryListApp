@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -47,6 +48,13 @@ class SettingsScreen extends ConsumerWidget {
             context,
             'App Settings',
             [
+              _buildListTile(
+                context,
+                'AI Chat Settings',
+                'Configure Gemini API key for AI chat',
+                Icons.api,
+                () => _showApiSettings(context),
+              ),
               _buildListTile(
                 context,
                 'Notifications',
@@ -181,6 +189,57 @@ class SettingsScreen extends ConsumerWidget {
       subtitle: Text(subtitle),
       trailing: const Icon(Icons.arrow_forward_ios, size: 16),
       onTap: onTap,
+    );
+  }
+
+  void _showApiSettings(BuildContext context) {
+    final controller = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Gemini API Key'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Enter your Gemini API key to enable AI chat features.\n\nGet your FREE API key at:\ngemini.google.com/apps/apikey',
+              style: TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: controller,
+              decoration: const InputDecoration(
+                labelText: 'API Key',
+                hintText: 'Enter your Gemini API key',
+                border: OutlineInputBorder(),
+              ),
+              obscureText: true,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (controller.text.isNotEmpty) {
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setString('gemini_api_key', controller.text);
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('API key saved!')),
+                  );
+                }
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
     );
   }
 
