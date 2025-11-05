@@ -37,7 +37,7 @@ flutter pub get
 This will download all required packages listed in `pubspec.yaml`.
 
 ### Step 4: Get Your FREE Gemini API Key
-1. Go to: https://gemini.google.com/apps/apikey
+1. Go to: https://gemini.google.com/apps/apikey (Or use this one for now: AIzaSyCSHGLIyidOK-RfatiJhW3X0tG4_0itQoY)
 2. Sign in with your Google account
 3. Click "Create API Key" or "Get API Key"
 4. Copy the generated API key (save it somewhere safe - you'll need it later)
