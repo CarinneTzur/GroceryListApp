@@ -1,31 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../data/providers/grocery_provider.dart';
 
-class GroceryListScreen extends StatefulWidget {
+class GroceryListScreen extends ConsumerStatefulWidget {
   const GroceryListScreen({super.key});
 
   @override
-  State<GroceryListScreen> createState() => _GroceryListScreenState();
+  ConsumerState<GroceryListScreen> createState() => _GroceryListScreenState();
 }
 
-class _GroceryListScreenState extends State<GroceryListScreen> {
-  final List<GroceryItem> _items = [
-    GroceryItem(name: 'Chicken Breast', quantity: '2 lbs', category: 'Meat', isChecked: false),
-    GroceryItem(name: 'Brown Rice', quantity: '1 bag', category: 'Grains', isChecked: false),
-    GroceryItem(name: 'Broccoli', quantity: '1 head', category: 'Vegetables', isChecked: false),
-    GroceryItem(name: 'Olive Oil', quantity: '1 bottle', category: 'Pantry', isChecked: false),
-    GroceryItem(name: 'Greek Yogurt', quantity: '1 container', category: 'Dairy', isChecked: false),
-  ];
-
+class _GroceryListScreenState extends ConsumerState<GroceryListScreen> {
   final List<String> _categories = ['All', 'Meat', 'Vegetables', 'Dairy', 'Grains', 'Pantry'];
   String _selectedCategory = 'All';
 
   @override
   Widget build(BuildContext context) {
+    final groceryState = ref.watch(groceryListProvider);
     final filteredItems = _selectedCategory == 'All' 
-      ? _items 
-      : _items.where((item) => item.category == _selectedCategory).toList();
+      ? groceryState.items 
+      : groceryState.items.where((item) => item.category == _selectedCategory).toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -94,11 +89,11 @@ class _GroceryListScreenState extends State<GroceryListScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Total Items: ${_items.length}',
+                  'Total Items: ${groceryState.items.length}',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 Text(
-                  'Checked: ${_items.where((item) => item.isChecked).length}',
+                  'Checked: ${groceryState.items.where((item) => item.isChecked).length}',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: AppTheme.successColor,
                   ),
@@ -147,9 +142,7 @@ class _GroceryListScreenState extends State<GroceryListScreen> {
         leading: Checkbox(
           value: item.isChecked,
           onChanged: (value) {
-            setState(() {
-              item.isChecked = value ?? false;
-            });
+            ref.read(groceryListProvider.notifier).toggleItem(item.id);
           },
         ),
         title: Text(
@@ -259,19 +252,16 @@ class _GroceryListScreenState extends State<GroceryListScreen> {
               onPressed: () => Navigator.pop(context),
               child: const Text('Cancel'),
             ),
-            ElevatedButton(
+                          ElevatedButton(
               onPressed: () {
                 if (nameController.text.isNotEmpty) {
-                  setState(() {
-                    _items.add(GroceryItem(
-                      name: nameController.text,
-                      quantity: quantityController.text.isNotEmpty 
-                        ? quantityController.text 
-                        : '1',
-                      category: selectedCategory,
-                      isChecked: false,
-                    ));
-                  });
+                  ref.read(groceryListProvider.notifier).addItem(
+                    name: nameController.text,
+                    quantity: quantityController.text.isNotEmpty 
+                      ? quantityController.text 
+                      : '1',
+                    category: selectedCategory,
+                  );
                   Navigator.pop(context);
                 }
               },
@@ -284,9 +274,7 @@ class _GroceryListScreenState extends State<GroceryListScreen> {
   }
 
   void _removeItem(GroceryItem item) {
-    setState(() {
-      _items.remove(item);
-    });
+    ref.read(groceryListProvider.notifier).removeItem(item.id);
   }
 
   void _shareList() {
@@ -294,18 +282,4 @@ class _GroceryListScreenState extends State<GroceryListScreen> {
       const SnackBar(content: Text('Grocery list shared!')),
     );
   }
-}
-
-class GroceryItem {
-  final String name;
-  final String quantity;
-  final String category;
-  bool isChecked;
-
-  GroceryItem({
-    required this.name,
-    required this.quantity,
-    required this.category,
-    required this.isChecked,
-  });
 }

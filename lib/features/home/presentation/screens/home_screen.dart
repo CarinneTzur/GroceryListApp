@@ -72,7 +72,7 @@ class HomeTab extends ConsumerWidget {
         title: const Text('Recipe Meal Planner'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.chat),
+            icon: const Icon(Icons.smart_toy),
             onPressed: () => context.push('/chat-brief'),
           ),
           IconButton(
@@ -156,8 +156,8 @@ class HomeTab extends ConsumerWidget {
                 ),
                 _buildQuickActionCard(
                   context,
-                  'Chat Brief',
-                  Icons.chat_bubble,
+                  'Meal Planner AI',
+                  Icons.smart_toy,
                   AppTheme.infoColor,
                   () => context.push('/chat-brief'),
                 ),
@@ -465,8 +465,8 @@ class ProfileTab extends ConsumerWidget {
                   ),
                   const Divider(height: 1),
                   ListTile(
-                    leading: const Icon(Icons.chat, color: AppTheme.infoColor),
-                    title: const Text('Chat Brief'),
+                    leading: const Text('🤖', style: TextStyle(fontSize: 24)),
+                    title: const Text('Meal Planner AI'),
                     trailing: const Icon(Icons.arrow_forward_ios),
                     onTap: () => context.push('/chat-brief'),
                   ),

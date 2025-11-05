@@ -50,7 +50,12 @@ class _ChatBriefScreenState extends ConsumerState<ChatBriefScreen> {
     
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Chat Brief'),
+        title: Row(
+          children: [
+            const Text('🤖 '),
+            const Text('Meal Planner AI'),
+          ],
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.clear_all),
