@@ -76,6 +76,8 @@ class ChatNotifier extends StateNotifier<ChatState> {
   final GeminiApiService _geminiService;
   final SharedPreferences _prefs;
   final Ref _ref;
+  List<String>? _lastIngredients;
+
 
   ChatNotifier(this._geminiService, this._prefs, this._ref) : super(const ChatState()) {
     _loadChatHistory();
@@ -97,12 +99,79 @@ class ChatNotifier extends StateNotifier<ChatState> {
     
     state = state.copyWith(messages: [welcomeMessage]);
   }
+  Map<String, String> _parseQuantityAndItem(String line) {
+    final trimmed = line.trim();
+    final units = r'(?:cups?|tsp|tbsp|teaspoons?|tablespoons?|grams?|g|kg|lbs?|pounds?|oz|ounces?|ml|liter|liters?)?';
 
+    // Helper function to extract max value from range
+    String extractMaxQuantity(String quantity) {
+      // Handle ranges like "8-10", "8–10", "8 to 10", "8 - 10"
+      final rangeRegex = RegExp(r'(\d+(?:[\/\.]?\d*)?)\s*(?:[-–]\s*|\s+to\s+)(\d+(?:[\/\.]?\d*)?)', caseSensitive: false);
+      final match = rangeRegex.firstMatch(quantity);
+      if (match != null) {
+        // Parse both numbers and return the larger one
+        double? first = double.tryParse(match.group(1)!.trim());
+        double? second = double.tryParse(match.group(2)!.trim());
+        if (first != null && second != null) {
+          return second > first ? second.toString() + quantity.replaceAll(rangeRegex, '') 
+                               : first.toString() + quantity.replaceAll(rangeRegex, '');
+        }
+      }
+      return quantity;
+    }
+
+    // 1) Quantity at start: "16 oz chicken" or "1 cup sugar"
+    final startRegex = RegExp(
+      r'^(\d+(?:[\/\.\s]?\d+)?(?:\s*[-–]\s*\d+(?:[\/\.\s]?\d+)?)?\s*' + units + r')\s+(.*)$',
+      caseSensitive: false,
+    );
+
+    // 2) Parenthesized quantity at start: "(16 ounces) chicken"
+    final startParenRegex = RegExp(
+      r'^\(\s*(\d+(?:[\/\.\s]?\d+)?(?:\s*[-–]\s*\d+(?:[\/\.\s]?\d+)?)?\s*' + units + r')\s*\)\s+(.*)$',
+      caseSensitive: false,
+    );
+
+    // 3) Parenthesized quantity at end: "chicken (16 ounces)"
+    final endParenRegex = RegExp(
+      r'^(.*\S)\s*\(\s*(\d+(?:[\/\.\s]?\d+)?(?:\s*[-–]\s*\d+(?:[\/\.\s]?\d+)?)?\s*' + units + r')\s*\)\s*$',
+      caseSensitive: false,
+    );
+
+    var match = startRegex.firstMatch(trimmed) ?? startParenRegex.firstMatch(trimmed);
+    if (match != null) {
+      final quantity = extractMaxQuantity(match.group(1)!.trim());
+      final name = match.group(2)!.trim();
+      return {'quantity': quantity, 'name': name};
+    }
+
+    match = endParenRegex.firstMatch(trimmed);
+    if (match != null) {
+      final name = match.group(1)!.trim();
+      final quantity = extractMaxQuantity(match.group(2)!.trim());
+      return {'quantity': quantity, 'name': name};
+    }
+
+    // 4) Any parenthesized quantity anywhere: remove it from the name and use as quantity
+    final anyParen = RegExp(r'\(\s*(\d+(?:[\/\.\s]?\d+)?(?:\s*[-–]\s*\d+(?:[\/\.\s]?\d+)?)?\s*' + units + r')\s*\)', caseSensitive: false).firstMatch(trimmed);
+    if (anyParen != null) {
+      final quantity = extractMaxQuantity(anyParen.group(1)!.trim());
+      final name = trimmed.replaceFirst(anyParen.group(0)!, '').replaceAll(RegExp(r'\s+'), ' ').trim();
+      return {'quantity': quantity, 'name': name.isEmpty ? trimmed : name};
+    }
+
+    // Default when no explicit quantity found
+    return {'quantity': '1', 'name': trimmed};
+  }
   List<String> _extractGroceryItems(String message) {
     // Simple keyword detection for grocery items
     final groceryKeywords = ['add', 'put', 'need', 'buy', 'get', 'grocery', 'shopping'];
     final lowerMessage = message.toLowerCase();
-    
+    // Handle contextual phrase "these ingredients"
+    if (lowerMessage.contains('these ingredients') && _lastIngredients != null) {
+  return _lastIngredients!;
+}
+
     List<String> items = [];
     
     // Check if message contains grocery-related keywords
@@ -196,14 +265,21 @@ class ChatNotifier extends StateNotifier<ChatState> {
     final groceryItems = _extractGroceryItems(message);
     if (groceryItems.isNotEmpty) {
       final groceryNotifier = _ref.read(groceryListProvider.notifier);
-      for (var item in groceryItems) {
-        final category = _determineCategory(item);
-        groceryNotifier.addItem(
-          name: item.split(' ').map((w) => w.isEmpty ? '' : w[0].toUpperCase() + w.substring(1)).join(' '),
-          quantity: '1',
-          category: category,
-        );
-      }
+  for (var item in groceryItems) {
+    final parsed = _parseQuantityAndItem(item);
+    final quantity = parsed['quantity']!;
+    final name = parsed['name']!;
+   final category = _determineCategory(name);
+
+    groceryNotifier.addItem(
+      name: name
+          .split(' ')
+          .map((w) => w.isEmpty ? '' : w[0].toUpperCase() + w.substring(1))
+          .join(' '),
+     quantity: quantity,
+     category: category,
+   );
+  }
     }
 
     try {
@@ -229,6 +305,26 @@ When users share information about their diet, allergies, budget, or preferences
         conversationHistory: conversationHistory,
         systemPrompt: systemPrompt,
       );
+
+      // Try to capture recipe ingredients if the AI listed them
+final ingredientPattern = RegExp(
+  r'(?:(?:\*\*|\*)?Ingredients(?:\*\*|\*)?:?\s*)([\s\S]+?)(?=(?:\*\*|\*)?(?:Directions|Instructions|Method|Why|$))',
+  caseSensitive: false,
+);
+final ingredientMatch = ingredientPattern.firstMatch(response);
+
+if (ingredientMatch != null) {
+  final rawList = ingredientMatch.group(1) ?? '';
+  final lines = rawList
+      .split(RegExp(r'[\n•\-\*]'))
+      .map((e) => e.trim())
+      .where((e) => e.isNotEmpty)
+      .toList();
+  if (lines.isNotEmpty) {
+    _lastIngredients = lines;
+  }
+}
+
 
       // Modify response if items were added
       String finalResponse = response;
@@ -257,6 +353,7 @@ When users share information about their diet, allergies, budget, or preferences
 
   void clearChat() {
     _addWelcomeMessage();
+    _lastIngredients = null;
   }
 }
 
