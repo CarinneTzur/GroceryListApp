@@ -104,7 +104,7 @@ lib/
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd recipe_meal_planner
+   cd GroceryListApp
    ```
 
 2. **Install dependencies**
