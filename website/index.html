@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>SP-5-Purple Groceries App</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+            background: #f3f6fb;
+            color: #222;
+        }
+        .page {
+            min-height: 100vh;
+            max-width: 800px; /* 单栏更好看，所以调窄一点 */
+            margin: 0 auto;
+            padding: 16px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        h1 {
+            font-size: 25px;
+        }
+        h2 {
+            font-size: 17px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: #4a75c9;
+        }
+        .subtitle {
+            font-size: 14px;
+            color: #555;
+        }
+        .card {
+            background: #ffffff;
+            border-radius: 10px;
+            padding: 12px 14px;
+            box-shadow: 0 4px 12px rgba(21, 52, 98, 0.08);
+        }
+        .row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        .label {
+            font-weight: 600;
+            color: #333;
+        }
+        .team-title,
+        .overview-title {
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: #29498c;
+        }
+        .overview-text {
+            font-size: 14px;
+            color: #444;
+        }
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+            font-size: 14px;
+        }
+        .member {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .avatar {
+            width: 66px;
+            height: 66px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4a75c9, #84b4ff);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 15px;
+            font-weight: 700;
+            overflow: hidden;
+        }
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .links {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 10px;
+            border-radius: 8px;
+            font-size: 14px;
+            text-decoration: none;
+            font-weight: 600;
+            border: 1px solid transparent;
+            white-space: nowrap;
+        }
+        .btn-main {
+            background: #3d6be7;
+            color: #fff;
+            border-color: #345ed0;
+        }
+        .btn-main:hover {
+            background: #345ed0;
+        }
+        .btn-sub {
+            background: #ffffff;
+            color: #29498c;
+            border-color: #cdd8f4;
+        }
+        .btn-sub:hover {
+            background: #eef3ff;
+        }
+        .btn-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        footer {
+            font-size: 12px;
+            color: #777;
+            margin-top: 12px;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+
+    <div class="card">
+        <h2>CS 4850 Senior PROJECT</h2>
+        <h1>SP-5-Purple Groceries App</h1>
+        <p class="subtitle">Section 03 • Fall 2025 • Kennesaw State University</p>
+        <div class="row">
+            <div><span class="label">Instructor:</span> Sharon Perry</div>
+            <div><span class="label">NDA:</span> No NDA</div>
+        </div>
+    </div>
+
+    <!-- Project Overview -->
+    <div class="card">
+        <div class="overview-title">Project Overview</div>
+        <p class="overview-text">
+            The grocery app is a mobile application designed to allow users to generate personalized meal plans and
+            grocery lists from both structured profile data and free-text natural language input. The application
+            simulates intelligent behavior through keyword matching, contextual analysis, and deduplication of grocery 
+            items, while also enforcing user constraints such as allergens, dietary preferences, and budget.
+        </p>
+    </div>
+
+    <!-- Team Members -->
+    <div class="card">
+        <div class="team-title">Team Members</div>
+        <div class="team-grid">
+            <div class="member">
+                <div class="avatar"><img src="images/CT.png"></div>
+                <div>Carinne Tzurdecker<br><span style="font-size:11px;color:#777;">Documentation</span></div>
+            </div>
+            <div class="member">
+                <div class="avatar"><img src="images/VE.png"></div>
+                <div>Vanessa Espinoza<br><span style="font-size:11px;color:#777;">Documentation</span></div>
+            </div>
+            <div class="member">
+                <div class="avatar"><img src="images/SH.png"></div>
+                <div>Shane Hazeur<br><span style="font-size:11px;color:#777;">Developer</span></div>
+            </div>
+            <div class="member">
+                <div class="avatar"><img src="images/PH.png"></div>
+                <div>Piao Hou<br><span style="font-size:11px;color:#777;">Developer</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Project Links -->
+    <div class="card">
+        <div class="overview-title">Project Links</div>
+        <div class="links">
+            <div class="btn-row">
+                <a class="btn btn-main" href="SP-5.pdf" target="_blank">📄 Final Report</a>
+                <a class="btn btn-sub" href="SP-5 Purple-Grocery-List-App-STP-STR.pdf" target="_blank">📄 Test Plan and Report</a>
+                <a class="btn btn-sub" href="SP-5-Purple-Groceries-App-Development.pdf" target="_blank">📄 Development Document</a>
+            </div>
+            <div class="btn-row">
+                <a class="btn btn-sub" href="SP-5-Purple Groceries App-Requirements.pdf" target="_blank">📄 Requirement Document</a>
+                <a class="btn btn-sub" href="SP-5-Purple Groceries AppDesign.pdf" target="_blank">📄 Design Document</a>
+                <a class="btn btn-sub" href="SP-5-Purple Groceries App-ProjectPlan.pdf" target="_blank">📄 Project Plan</a>
+            </div>
+
+            <div class="btn-row">
+                <a class="btn btn-sub" href="https://github.com/CarinneTzur/GroceryListApp/tree/master" target="_blank">
+                    💻 GitHub Source Code
+                </a>
+            </div>
+
+            <div class="btn-row">
+                <a class="btn btn-sub" href="https://www.youtube.com/watch?v=YourVideoId" target="_blank">
+                    🎥 Final Presentation Video
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        CS 4850 • SP-5-Purple Groceries App
+    </footer>
+
+</div>
+</body>
+</html>
